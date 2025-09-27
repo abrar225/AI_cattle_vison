@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BreedAI • Ensemble Cattle Recognition</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #ffffff;
+            --bg-dark: #0f172a;
+            --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            mix-blend-mode: difference;
+            transition: transform 0.1s ease;
+        }
+
+        .cursor-trail {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.3s ease;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-top: 100px;
+        }
+
+        .hero-content {
+            max-width: 600px;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .button-primary {
+            background: var(--gradient);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .button-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Upload Section */
+        .upload-section {
+            padding: 100px 0;
+            text-align: center;
+        }
+
+        .upload-card {
+            background: white;
+            border-radius: 30px;
+            padding: 60px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Results Section */
+        .results {
+            display: none;
+            animation: fadeInUp 0.6s ease;
+            text-align: left;
+        }
+
+        .final-result {
+            background: var(--gradient);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .voting-breakdown {
+            background: #f8fafc;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .model-prediction {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .vote-bar {
+            background: #e5e7eb;
+            height: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .vote-fill {
+            height: 100%;
+            background: var(--secondary);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        .confidence-bar {
+            background: rgba(99, 102, 241, 0.2);
+            height: 8px;
+            border-radius: 10px;
+            margin: 5px 0;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        /* Training Transparency */
+        .transparency-section {
+            background: #f8fafc;
+            padding: 80px 0;
+            margin-top: 60px;
+        }
+
+        .transparency-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .transparency-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .upload-card { padding: 30px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Cursor -->
+    <div class="custom-cursor"></div>
+    <div id="particles-js"></div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="container nav-content">
+            <div class="logo">BreedAI Ensemble</div>
+            <button class="button-primary" onclick="scrollToUpload()">
+                <i class="fas fa-bolt"></i> Try Ensemble AI
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Ensemble AI for Accurate Cattle Recognition</h1>
+                <p style="font-size: 1.3rem; color: var(--text-light); margin-bottom: 40px; line-height: 1.6;">
+                    Four AI models work together using weighted voting to provide the most accurate breed identification.
+                </p>
+                <button class="button-primary" onclick="scrollToUpload()">
+                    <i class="fas fa-camera"></i> Try Ensemble Voting
+                </button>
+            </div>
+        </div>
+
+        <div class="model-container floating">
+            <div id="cow-model"></div>
+        </div>
+    </section>
+
+    <!-- Upload Section -->
+    <section id="upload" class="upload-section">
+        <div class="container">
+            <div class="upload-card">
+                <h2 style="font-size: 2.5rem; margin-bottom: 10px;">Ensemble AI Analysis</h2>
+                <p style="color: var(--text-light); margin-bottom: 40px;">
+                    4 trained models vote on the breed. Higher accuracy models have more voting power.
+                </p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 40px 0;">
+                    <div class="upload-option" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-cloud-upload-alt" style="font-size: 3rem; color: var(--primary); margin-bottom: 20px;"></i>
+                        <h3>Upload Photo</h3>
+                        <p>Select an image from your device</p>
+                    </div>
+
+                    <div class="upload-option" onclick="startCamera()">
+                        <i class="fas fa-camera" style="font-size: 3rem; color: var(--primary); margin-bottom: 20px;"></i>
+                        <h3>Use Camera</h3>
+                        <p>Capture a live photo</p>
+                    </div>
+                </div>
+
+                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(this.files[0])">
+
+                <!-- Camera Preview -->
+                <div id="cameraContainer" style="display: none;">
+                    <div class="camera-preview">
+                        <video id="video" autoplay playsinline style="width: 100%; height: 300px; background: #000; border-radius: 15px; object-fit: cover;"></video>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="button-primary" onclick="capturePhoto()">
+                            <i class="fas fa-camera"></i> Capture Photo
+                        </button>
+                        <button class="button-secondary" onclick="stopCamera()" style="background: #6c757d; color: white; padding: 15px 25px; border: none; border-radius: 50px; margin-left: 10px;">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div id="loading" style="display: none; margin: 40px 0;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                        <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <div>
+                            <h3>Ensemble AI is analyzing...</h3>
+                            <p>4 models are voting on the breed identification</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div id="results" class="results">
+                    <!-- Results will be inserted here by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Training Transparency Section -->
+    <section class="transparency-section">
+        <div class="container">
+            <h2 style="text-align: center; font-size: 3rem; margin-bottom: 20px;">Training Transparency</h2>
+            <p style="text-align: center; color: var(--text-light); margin-bottom: 60px; font-size: 1.2rem;">
+                Honest insights about our model training process and challenges
+            </p>
+
+            <div class="transparency-grid">
+                <div class="transparency-card">
+                    <h3>📊 Dataset Challenges</h3>
+                    <p><strong>Image Quality:</strong> Variable lighting and background conditions</p>
+                    <p><strong>Class Imbalance:</strong> Some breeds had only 36-50 images</p>
+                    <p><strong>Visual Similarity:</strong> Many breeds look very similar</p>
+                </div>
+
+                <div class="transparency-card">
+                    <h3>🤖 Model Performance</h3>
+                    <p><strong>Best Model Accuracy:</strong> 52.45%</p>
+                    <p><strong>Ensemble Advantage:</strong> Combines multiple model strengths</p>
+                    <p><strong>Voting System:</strong> Higher accuracy models get more votes</p>
+                </div>
+
+                <div class="transparency-card">
+                    <h3>🎯 Current Limitations</h3>
+                    <p>• Works best with clear, front-facing cattle photos</p>
+                    <p>• Performance varies by breed rarity</p>
+                    <p>• Ongoing improvements with more data</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Custom Cursor
+        const cursor = document.querySelector('.custom-cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        // Camera functionality
+        let stream = null;
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                document.getElementById('video').srcObject = stream;
+                document.getElementById('cameraContainer').style.display = 'block';
+            } catch (err) {
+                alert('Camera error: ' + err.message);
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                document.getElementById('cameraContainer').style.display = 'none';
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            canvas.toBlob(blob => {
+                processImage(blob);
+                stopCamera();
+            });
+        }
+
+        function handleFileSelect(file) {
+            if (file) processImage(file);
+        }
+
+        function processImage(file) {
+            showLoading();
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showEnsembleResults(data.result);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                alert('Error: ' + error);
+            });
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showEnsembleResults(result) {
+            const container = document.getElementById('results');
+
+            let html = `
+                <h2 style="text-align: center; margin-bottom: 30px;">🎯 Ensemble Voting Results</h2>
+
+                <div class="final-result">
+                    <h3 style="font-size: 2rem; margin-bottom: 10px;">Final Prediction</h3>
+                    <div style="font-size: 3rem; font-weight: bold; margin: 20px 0;">${result.final_prediction.breed}</div>
+                    <div style="font-size: 1.5rem; margin-bottom: 20px;">${result.final_prediction.confidence_percent} Confidence</div>
+                    <div>Voting: ${result.final_prediction.votes}/${result.final_prediction.total_votes} votes (${result.final_prediction.vote_percentage})</div>
+                </div>
+
+                <div class="voting-breakdown">
+                    <h3>🗳️ Voting Breakdown</h3>
+                    <div class="vote-bar">
+                        <div class="vote-fill" style="width: ${result.final_prediction.vote_percentage}"></div>
+                    </div>
+
+                    <h4 style="margin-top: 30px;">Model Predictions:</h4>
+            `;
+
+            result.model_predictions.forEach(model => {
+                html += `
+                    <div class="model-prediction">
+                        <h4>${model.model_name} (Accuracy: ${model.accuracy}%) - Votes: ${model.votes}</h4>
+                        <p><strong>Top Choice:</strong> ${model.top_choice}</p>
+                        <div style="margin-top: 10px;">
+                            ${model.predictions.slice(0, 3).map((pred, idx) => `
+                                <div style="margin: 5px 0;">
+                                    <span>${idx + 1}. ${pred.breed}</span>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: ${pred.confidence * 100}%"></div>
+                                    </div>
+                                    <span style="float: right;">${pred.confidence_percent}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+            container.style.display = 'block';
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetApp() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+        }
+
+        function scrollToUpload() {
+            document.getElementById('upload').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Particles.js Background
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 60, density: { enable: true, value_area: 800 } },
+                color: { value: "#6366f1" },
+                shape: { type: "circle" },
+                opacity: { value: 0.5, random: true },
+                size: { value: 3, random: true },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: "#6366f1",
+                    opacity: 0.2,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 2,
+                    direction: "none",
+                    random: true,
+                    straight: false,
+                    out_mode: "out",
+                    bounce: false
+                }
+            }
+        });
+    </script>
+</body>
+</html>

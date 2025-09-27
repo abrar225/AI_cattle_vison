@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BreedAI • Intelligent Cattle Recognition</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #ffffff;
+            --bg-dark: #0f172a;
+            --gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        .custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            mix-blend-mode: difference;
+            transition: transform 0.1s ease;
+        }
+
+        .cursor-trail {
+            position: fixed;
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transition: all 0.3s ease;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .cta-button {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding-top: 100px;
+        }
+
+        .hero-content {
+            max-width: 600px;
+            z-index: 2;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--text) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: var(--text-light);
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .button-primary {
+            background: var(--gradient);
+            color: white;
+            padding: 15px 35px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .button-secondary {
+            background: transparent;
+            color: var(--text);
+            padding: 15px 35px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid var(--text-light);
+        }
+
+        .button-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+        }
+
+        .button-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        /* 3D Model Container */
+        .model-container {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 600px;
+            height: 600px;
+            z-index: 1;
+        }
+
+        #cow-model {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Upload Section */
+        .upload-section {
+            padding: 100px 0;
+            text-align: center;
+        }
+
+        .upload-card {
+            background: white;
+            border-radius: 30px;
+            padding: 60px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient);
+        }
+
+        .upload-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .upload-option {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 20px;
+            padding: 40px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-option:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        }
+
+        .upload-option i {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .camera-preview {
+            width: 100%;
+            height: 300px;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Results */
+        .results {
+            display: none;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .result-card {
+            background: var(--gradient);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .confidence-bar {
+            background: rgba(255,255,255,0.3);
+            height: 12px;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: white;
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        /* Training Transparency Section */
+        .transparency-section {
+            padding: 100px 0;
+            background: #f8fafc;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 50px 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .challenges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .challenge-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .tech-specs {
+            background: var(--gradient);
+            color: white;
+            padding: 40px;
+            border-radius: 20px;
+            margin-top: 40px;
+        }
+
+        /* Features */
+        .features {
+            padding: 100px 0;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .feature-card i {
+            font-size: 3rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .upload-options { grid-template-columns: 1fr; }
+            .model-container { display: none; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Cursor -->
+    <div class="custom-cursor"></div>
+
+    <!-- Particles Background -->
+    <div id="particles-js"></div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="container nav-content">
+            <div class="logo">BreedAI</div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#upload">Identify</a>
+                <a href="#transparency">Transparency</a>
+            </div>
+            <button class="cta-button" onclick="scrollToUpload()">Get Started</button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Identify Cattle Breeds with AI Precision</h1>
+                <p>Upload a photo and instantly identify 41 different Indian cattle breeds using advanced Vision Transformer technology.</p>
+                <div class="hero-buttons">
+                    <button class="button-primary" onclick="scrollToUpload()">
+                        <i class="fas fa-camera"></i> Try It Free
+                    </button>
+                    <a href="#transparency" class="button-secondary">
+                        <i class="fas fa-chart-line"></i> View Training Data
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3D Model Placeholder -->
+        <div class="model-container floating">
+            <div id="cow-model"></div>
+        </div>
+    </section>
+
+    <!-- Upload Section -->
+    <section id="upload" class="upload-section">
+        <div class="container">
+            <div class="upload-card">
+                <h2 style="font-size: 2.5rem; margin-bottom: 10px;">Capture. Identify. Know.</h2>
+                <p style="color: var(--text-light); margin-bottom: 40px;">Kill all unnecessary guesswork. Save farmers and researchers valuable time.</p>
+
+                <div class="upload-options">
+                    <div class="upload-option" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <h3>Upload Photo</h3>
+                        <p>Select an image from your device</p>
+                    </div>
+
+                    <div class="upload-option" onclick="startCamera()">
+                        <i class="fas fa-camera"></i>
+                        <h3>Use Camera</h3>
+                        <p>Capture a live photo</p>
+                    </div>
+                </div>
+
+                <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(this.files[0])">
+
+                <!-- Camera Preview -->
+                <div id="cameraContainer" style="display: none;">
+                    <div class="camera-preview">
+                        <video id="video" autoplay playsinline></video>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="button-primary" onclick="capturePhoto()">
+                            <i class="fas fa-camera"></i> Capture Photo
+                        </button>
+                        <button class="button-secondary" onclick="stopCamera()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading -->
+                <div id="loading" style="display: none; margin: 40px 0;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+                        <div class="spinner" style="width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                        <div>
+                            <h3>AI is analyzing your image...</h3>
+                            <p>Our Vision Transformer model is processing the details</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div id="results" class="results">
+                    <h2 style="margin-bottom: 30px;">Identification Results</h2>
+                    <div id="predictionsContainer"></div>
+                    <button class="button-primary" onclick="resetApp()" style="margin-top: 30px;">
+                        <i class="fas fa-redo"></i> Analyze Another Image
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Training Transparency Section -->
+    <section id="transparency" class="transparency-section">
+        <div class="container">
+            <h2 style="text-align: center; font-size: 3rem; margin-bottom: 20px;">Training Transparency</h2>
+            <p style="text-align: center; color: var(--text-light); font-size: 1.2rem; max-width: 800px; margin: 0 auto 50px;">
+                We believe in complete transparency about our model's training process, challenges, and limitations.
+            </p>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">41</div>
+                    <div>Cattle Breeds</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">5,928</div>
+                    <div>Total Images</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">52.45%</div>
+                    <div>Validation Accuracy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">30</div>
+                    <div>Training Epochs</div>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 20px;">🏋️ Training Challenges We Faced</h3>
+            <div class="challenges-grid">
+                <div class="challenge-card">
+                    <h4><i class="fas fa-images"></i> Variable Image Quality</h4>
+                    <p>Images had different lighting, angles, and resolutions affecting model performance</p>
+                </div>
+                <div class="challenge-card">
+                    <h4><i class="fas fa-balance-scale"></i> Dataset Imbalance</h4>
+                    <p>Some breeds had as few as 36 images while others had 400+ creating bias</p>
+                </div>
+                <div class="challenge-card">
+                    <h4><i class="fas fa-cow"></i> Visual Similarity</h4>
+                    <p>Many Indian cattle breeds look very similar, making classification difficult</p>
+                </div>
+                <div class="challenge-card">
+                    <h4><i class="fas fa-photo-video"></i> Background Clutter</h4>
+                    <p>Images contained complex backgrounds that distracted the model</p>
+                </div>
+            </div>
+
+            <div class="tech-specs">
+                <h3 style="margin-bottom: 20px;">🔧 Technical Specifications</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div>
+                        <strong>Model Architecture:</strong><br>Vision Transformer (ViT-B/16)
+                    </div>
+                    <div>
+                        <strong>Input Size:</strong><br>224×224 pixels
+                    </div>
+                    <div>
+                        <strong>Training Hardware:</strong><br>GPU Accelerated
+                    </div>
+                    <div>
+                        <strong>Framework:</strong><br>PyTorch
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: white; padding: 30px; border-radius: 15px; margin-top: 40px;">
+                <h3 style="margin-bottom: 15px;">💡 Our Approach & Limitations</h3>
+                <p><strong>Realistic Expectations:</strong> With 41 visually similar breeds, achieving 52.45% accuracy is actually quite good. For comparison, random guessing would yield only 2.4% accuracy.</p>
+                <p><strong>Data Quality Issues:</strong> The original dataset had significant quality variations. We applied extensive augmentation but some limitations remain.</p>
+                <p><strong>Future Improvements:</strong> We're working on collecting higher-quality data and implementing advanced techniques to improve accuracy.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 style="text-align: center; font-size: 3rem; margin-bottom: 60px;">Why BreedAI?</h2>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <i class="fas fa-brain"></i>
+                    <h3>Advanced AI</h3>
+                    <p>Powered by Vision Transformer technology trained on thousands of cattle images</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-bolt"></i>
+                    <h3>Instant Results</h3>
+                    <p>Get breed identification in seconds with confidence scoring</p>
+                </div>
+                <div class="feature-card">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>Mobile Friendly</h3>
+                    <p>Works perfectly on all devices with camera integration</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Custom Cursor
+        const cursor = document.querySelector('.custom-cursor');
+        const trails = [];
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+
+            // Create trail effect
+            const trail = document.createElement('div');
+            trail.className = 'cursor-trail';
+            trail.style.left = e.clientX + 'px';
+            trail.style.top = e.clientY + 'px';
+            document.body.appendChild(trail);
+
+            trails.push(trail);
+            if (trails.length > 10) {
+                const oldTrail = trails.shift();
+                if (oldTrail) oldTrail.remove();
+            }
+
+            setTimeout(() => {
+                trail.remove();
+                trails.splice(trails.indexOf(trail), 1);
+            }, 1000);
+        });
+
+        // Particles.js Configuration
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: "#6366f1" },
+                shape: { type: "circle" },
+                opacity: { value: 0.5, random: true },
+                size: { value: 3, random: true },
+                line_linked: {
+                    enable: true,
+                    distance: 150,
+                    color: "#6366f1",
+                    opacity: 0.2,
+                    width: 1
+                },
+                move: {
+                    enable: true,
+                    speed: 2,
+                    direction: "none",
+                    random: true,
+                    straight: false,
+                    out_mode: "out",
+                    bounce: false
+                }
+            },
+            interactivity: {
+                detect_on: "canvas",
+                events: {
+                    onhover: { enable: true, mode: "repulse" },
+                    onclick: { enable: true, mode: "push" }
+                }
+            }
+        });
+
+        // Camera functionality
+        let stream = null;
+
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                document.getElementById('video').srcObject = stream;
+                document.getElementById('cameraContainer').style.display = 'block';
+            } catch (err) {
+                alert('Camera error: ' + err.message);
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                document.getElementById('cameraContainer').style.display = 'none';
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            canvas.toBlob(blob => {
+                processImage(blob);
+                stopCamera();
+            });
+        }
+
+        // File handling
+        function handleFileSelect(file) {
+            if (file) processImage(file);
+        }
+
+        function processImage(file) {
+            showLoading();
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                if (data.success) {
+                    showResults(data.predictions);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                hideLoading();
+                alert('Error: ' + error);
+            });
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showResults(predictions) {
+            const container = document.getElementById('predictionsContainer');
+            container.innerHTML = '';
+
+            predictions.forEach(pred => {
+                container.innerHTML += `
+                    <div class="result-card">
+                        <h3>${pred.rank}. ${pred.breed}</h3>
+                        <div style="font-size: 2rem; margin: 10px 0;">${pred.confidence}</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${pred.confidence_value * 100}%"></div>
+                        </div>
+                        <p>Confidence Level</p>
+                    </div>
+                `;
+            });
+
+            document.getElementById('results').style.display = 'block';
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function resetApp() {
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+        }
+
+        function scrollToUpload() {
+            document.getElementById('upload').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Simple 3D effect with Three.js
+        function init3D() {
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, 600/600, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ alpha: true });
+            renderer.setSize(600, 600);
+            document.getElementById('cow-model').appendChild(renderer.domElement);
+
+            const geometry = new THREE.SphereGeometry(2, 32, 32);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x6366f1,
+                transparent: true,
+                opacity: 0.8
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            scene.add(sphere);
+
+            const light = new THREE.PointLight(0xffffff, 1);
+            light.position.set(5, 5, 5);
+            scene.add(light);
+
+            camera.position.z = 5;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                sphere.rotation.x += 0.01;
+                sphere.rotation.y += 0.01;
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            init3D();
+        });
+    </script>
+</body>
+</html>
