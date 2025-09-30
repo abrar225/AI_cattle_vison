@@ -326,9 +326,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support & Contact
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/breedai-cattle-classification/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/breedai-cattle-classification/discussions)
-- **Email**: your-email@example.com
+- **Issues**: [GitHub Issues](https://github.com/abrar225)
+- **Discussions**: [GitHub Discussions](https://github.com/abrar225)
+- **Email**: moabrarakhunji@gmail.com
 
 ## 🚀 Future Roadmap
 
