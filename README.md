@@ -19,7 +19,7 @@
 ## 🎯 Overview
 
 BreedAI is a sophisticated cattle breed identification system that leverages **ensemble Vision Transformers** to accurately identify 41 different Indian cattle breeds. Our system combines multiple AI models through weighted voting to provide reliable, transparent predictions with professional-grade web interface.
-
+Here is the implementation Video : **https://youtu.be/FJ139owREQg?si=KDYb0vGSBRk1Ss05**
 <div align="center">
   <img src="https://via.placeholder.com/800x400/6366f1/ffffff?text=BreedAI+Ensemble+System" alt="BreedAI Interface" width="800"/>
 </div>
